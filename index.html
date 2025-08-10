@@ -81,6 +81,18 @@
   .pill{padding:12px}
 }
 
+
+/* Mobile fix: force all sections to full width to avoid overlap on devices with high DPI */
+@media (max-width: 1200px){
+  [style*="grid-column: span 6;"],
+  [style*="grid-column: span 7;"],
+  [style*="grid-column: span 5;"],
+  [style*="grid-column: span 12;"]{
+    grid-column: 1 / -1 !important;
+  }
+  .grid{grid-template-columns: 1fr !important;}
+}
+
 </style>
 
   <link rel="manifest" href="manifest.webmanifest">
@@ -536,14 +548,5 @@
   calc();
 })();
 </script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', function() {
-    navigator.serviceWorker.register('./sw.js').catch(function(e){ console.log('SW reg failed', e); });
-  });
-}
-</script>
-
 </body>
 </html>
