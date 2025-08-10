@@ -1,9 +1,9 @@
 
-const CACHE = 'zeugnisnoten-v1.2.2';
+const CACHE = 'zeugnisnoten-v1.3.0-strict';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.webmanifest',
+  './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
 ];
