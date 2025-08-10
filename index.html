@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Zeugnisnoten-Rechner</title>
+  <style>
+    :root{
+      --bg:#0f172a; --card:#111827; --muted:#94a3b8; --text:#e5e7eb;
+      --accent:#22c55e; --accent2:#60a5fa; --danger:#ef4444;
+      --shadow: 0 10px 25px rgba(0,0,0,.35); --radius: 18px; --gap: 14px;
+    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial;
+      background: radial-gradient(1200px 800px at 80% -10%, rgba(96,165,250,.12), transparent 60%),
+                  radial-gradient(1000px 700px at 20% 110%, rgba(34,197,94,.10), transparent 60%),
+                  var(--bg); color:var(--text); line-height:1.45;
+    }
+    .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+    header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+    h1{font-size: clamp(22px, 2.4vw, 30px);margin:0;font-weight:700;letter-spacing:.2px}
+    .badge{font-size:12px;color:var(--muted)}
+    .grid{display:grid;grid-template-columns: repeat(12,1fr); gap: var(--gap)}
+    .card{
+      background: linear-gradient(145deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.06); border-radius: var(--radius); padding:16px;
+      box-shadow: var(--shadow); backdrop-filter: blur(6px);
+    }
+    .card h2{margin:0 0 10px 0;font-size:18px}
+    .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    label{font-size:13px;color:var(--muted)}
+    input[type=number], input[type=text], select{
+      background:#0b1220; color:var(--text);
+      border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px; outline:none;
+    }
+    input[type=number]{width:120px}
+    input[type=text]{width:220px}
+    input:focus, select:focus{border-color:var(--accent2)}
+    .btn{
+      background:linear-gradient(180deg, rgba(96,165,250,.22), rgba(96,165,250,.14));
+      border:1px solid rgba(96,165,250,.45); color:#eaf2ff; padding:10px 14px; border-radius:12px;
+      cursor:pointer; transition:.2s; font-weight:600
+    }
+    .btn:hover{transform:translateY(-1px); box-shadow:0 8px 20px rgba(96,165,250,.25)}
+    .btn.ghost{background:transparent;border-color:rgba(255,255,255,.12);color:var(--text)}
+    .btn.danger{background:linear-gradient(180deg, rgba(239,68,68,.26), rgba(239,68,68,.18));border-color:rgba(239,68,68,.55)}
+    .list{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .pill{
+      display:grid; gap:10px; align-items:center;
+      background:#0b1220;border:1px solid rgba(255,255,255,.08); border-radius:12px; padding:10px 12px;
+    }
+    .pill-row{display:grid; grid-template-columns: auto 1fr auto auto; gap:10px; align-items:center;}
+    .pill .idx{font-weight:700}
+    .pill input[type=number]{width:100px;padding:8px 10px}
+    .muted{color:var(--muted)}
+    .sep{height:1px;background:rgba(255,255,255,.08);margin:10px 0}
+    .range-row{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center}
+    .result{font-size: clamp(28px, 3.5vw, 44px); font-weight:800; letter-spacing:.3px; line-height:1.2}
+    .mini{font-size:12px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .foot{font-size:12px;color:var(--muted);margin-top:10px}
+    .hint{font-size:12px;color:#c7f9cc;background:rgba(34,197,94,.12);border:1px dashed rgba(34,197,94,.4);padding:8px 10px;border-radius:12px}
+    .flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .right{justify-content:flex-end}
+    .badge-soft{
+      font-size:12px; padding:4px 8px; border-radius:999px; background:rgba(96,165,250,.15); border:1px solid rgba(96,165,250,.35);
+    }
+    .group-header{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .entry{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .entry input[type=number]{width:110px}
+    .entries{display:flex; flex-direction:column; gap:8px; margin-top:8px}
+    .sumline{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+    @media (max-width: 800px){ .grid{grid-template-columns: 1fr} }
+  </style>
+
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Zeugnisnoten">
+  <link rel="icon" href="icons/icon-192.png">
+
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Zeugnisnoten-Rechner</h1>
+      <div class="badge">Version 1.2 • Zusatzleistungen als Gruppen • lokal im Browser</div>
+    </header>
+
+    <div class="grid">
+      <!-- Schriftliche Noten -->
+      <section class="card" style="grid-column: span 6;">
+        <h2>Schriftliche Leistungen</h2>
+        <div class="row">
+          <button class="btn" id="addWritten">+ Arbeit hinzufügen</button>
+          <button class="btn ghost" id="clearWritten">Liste leeren</button>
+          <span class="sub">Trage pro Arbeit die Note als Zahl ein (z. B. 1–6 oder Punktzahl).</span>
+        </div>
+        <div id="writtenList" class="list"></div>
+        <div class="sep"></div>
+        <div class="row">
+          <div><label>Ø schriftlich</label><div id="avgWritten" class="muted">–</div></div>
+        </div>
+      </section>
+
+      <!-- Mündliche Noten -->
+      <section class="card" style="grid-column: span 6;">
+        <h2>Mündliche Leistungen</h2>
+        <div class="row">
+          <button class="btn" id="addOral">+ Note hinzufügen</button>
+          <button class="btn ghost" id="clearOral">Liste leeren</button>
+          <span class="sub">Trage pro mündlicher Leistung die Note als Zahl ein.</span>
+        </div>
+        <div id="oralList" class="list"></div>
+        <div class="sep"></div>
+        <div class="row">
+          <div><label>Ø mündlich</label><div id="avgOral" class="muted">–</div></div>
+        </div>
+      </section>
+
+      <!-- Zusatz-Gruppen -->
+      <section class="card" style="grid-column: span 12;">
+        <h2>Zusatz-Gruppen</h2>
+        <div class="row">
+          <button class="btn" id="addGroup">+ Gruppe hinzufügen</button>
+          <button class="btn ghost" id="clearGroups">Alle Gruppen löschen</button>
+          <span class="sub">Eine Gruppe fasst mehrere Einzelleistungen zu einem Mittelwert zusammen und zählt mit einem Gesamt-% zur gewählten Kategorie.</span>
+        </div>
+        <div id="groupList" class="list"></div>
+        <div class="sep"></div>
+        <div class="sumline">
+          <span class="badge-soft">Σ Gruppenanteile → Schriftlich: <strong id="sumGroupsW">0%</strong></span>
+          <span class="badge-soft">Σ Gruppenanteile → Mündlich: <strong id="sumGroupsO">0%</strong></span>
+          <span class="sub">Bei Σ &gt; 100% werden Anteile innerhalb der Kategorie automatisch auf 100% normiert.</span>
+        </div>
+      </section>
+
+      <!-- Gewichtung zwischen Schriftlich / Mündlich -->
+      <section class="card" style="grid-column: span 12;">
+        <h2>Gewichtung der Kategorien</h2>
+        <div class="range-row">
+          <div>
+            <label>Gewichtung Schriftlich / Mündlich</label>
+            <input id="weightWritten" type="range" min="0" max="100" value="50" />
+          </div>
+          <div class="pill" style="grid-template-columns:auto auto auto;gap:14px">
+            <div>Schriftlich: <strong id="wWrittenLabel">50%</strong></div>
+            <div>Mündlich: <strong id="wOralLabel">50%</strong></div>
+            <div id="weightWarn" class="muted"></div>
+          </div>
+          <button class="btn ghost" id="resetWeights">50/50</button>
+        </div>
+      </section>
+
+      <!-- Halbjahresnote -->
+      <section class="card" style="grid-column: span 12;">
+        <h2>Halbjahresnote einbeziehen</h2>
+        <div class="flex">
+          <label class="switch"><input id="useHalfYear" type="checkbox" checked> Aktiv</label>
+          <label>Halbjahresnote</label>
+          <input id="halfYearGrade" type="number" step="0.01" placeholder="z. B. 2.3" />
+          <label>Anteil Halbjahr (%)</label>
+          <input id="halfYearWeight" type="number" min="0" max="100" step="0.1" value="50" />
+          <span class="muted">Rest fließt aus dem aktuellen Jahr ein.</span>
+        </div>
+      </section>
+
+      <!-- Einstellungen & Ergebnis -->
+      <section class="card" style="grid-column: span 7;">
+        <h2>Einstellungen</h2>
+        <div class="two-col">
+          <div class="flex">
+            <label for="roundMode">Rundung</label>
+            <select id="roundMode">
+              <option value="none">Keine Rundung</option>
+              <option value="oneDecimal">Auf 1 Nachkommastelle</option>
+              <option value="halfUp">Kaufmännisch (0,5 aufrunden)</option>
+              <option value="ceiling">Immer aufrunden</option>
+              <option value="floor">Immer abrunden</option>
+            </select>
+          </div>
+          <div class="flex right">
+            <button class="btn" id="saveState">Speichern</button>
+            <button class="btn ghost" id="loadState">Laden</button>
+            <button class="btn danger" id="clearState">Zurücksetzen</button>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div class="hint">
+          Hinweise: Notenskala flexibel. Prozentwerte können Dezimalstellen haben (z. B. 6,7 %). Zusatzanteile je Kategorie werden bei Überschreitung intern auf max. 100 % skaliert.
+        </div>
+      </section>
+
+      <section class="card" style="grid-column: span 5;">
+        <h2>Ergebnis</h2>
+        <div class="result" id="finalGrade">–</div>
+        <div class="mini muted" id="explain">Geben Sie Werte ein, um die Gesamtnote zu berechnen.</div>
+      </section>
+    </div>
+
+    <footer class="foot">
+      © 2025 • Lokal nutzbar (einfach als Datei öffnen). Tipp: Als „App“ auf dem Smartphone speichern (Teilen → Zum Startbildschirm).
+    </footer>
+  </div>
+
+<script>
+(function(){
+  const $ = (sel) => document.querySelector(sel);
+  const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+  // Elements
+  const writtenList = $("#writtenList");
+  const oralList = $("#oralList");
+  const addWrittenBtn = $("#addWritten");
+  const addOralBtn = $("#addOral");
+  const clearWrittenBtn = $("#clearWritten");
+  const clearOralBtn = $("#clearOral");
+  const avgWrittenEl = $("#avgWritten");
+  const avgOralEl = $("#avgOral");
+
+  const groupList = $("#groupList");
+  const addGroupBtn = $("#addGroup");
+  const clearGroupsBtn = $("#clearGroups");
+  const sumGroupsW = $("#sumGroupsW");
+  const sumGroupsO = $("#sumGroupsO");
+
+  const weightWritten = $("#weightWritten");
+  const wWrittenLabel = $("#wWrittenLabel");
+  const wOralLabel = $("#wOralLabel");
+  const resetWeights = $("#resetWeights");
+
+  const useHalfYear = $("#useHalfYear");
+  const halfYearGrade = $("#halfYearGrade");
+  const halfYearWeight = $("#halfYearWeight");
+  const roundMode = $("#roundMode");
+  const finalGrade = $("#finalGrade");
+  const explain = $("#explain");
+  const saveState = $("#saveState");
+  const loadState = $("#loadState");
+  const clearState = $("#clearState");
+
+  // Helpers for lists
+  function addScoreItem(listEl, placeholder){
+    const item = document.createElement('div');
+    item.className = 'pill';
+    item.innerHTML = `
+      <div class="pill-row">
+        <div class="idx">#</div>
+        <div class="muted">${placeholder}</div>
+        <input type="number" step="0.01" placeholder="z. B. 2.0" />
+        <button class="btn ghost del">Entfernen</button>
+      </div>
+    `;
+    const input = item.querySelector('input');
+    input.addEventListener('input', calc);
+    item.querySelector('.del').addEventListener('click', ()=>{ listEl.removeChild(item); renumber(listEl); calc(); });
+    listEl.appendChild(item);
+    renumber(listEl);
+    input.focus();
+    calc();
+  }
+
+  function readScores(listEl){
+    return Array.from(listEl.querySelectorAll('input[type=number]')).map(inp=>{
+      const v = parseFloat((inp.value||'').toString().replace(',','.'));
+      return Number.isFinite(v) ? v : null;
+    }).filter(v=>v!==null);
+  }
+
+  function average(arr){ if(!arr.length) return null; return arr.reduce((a,b)=>a+b,0)/arr.length; }
+
+  function renumber(listEl){
+    Array.from(listEl.querySelectorAll('.idx')).forEach((el,i)=>{ el.textContent = '#' + (i+1); });
+  }
+
+  // Groups
+  function addGroup(name='Gruppe', target='oral', percent='0', entries=['']){
+    const g = document.createElement('div');
+    g.className = 'pill';
+    g.innerHTML = `
+      <div class="group-header">
+        <div class="idx">#</div>
+        <input type="text" class="g-name" value="${name}" placeholder="Name (z. B. Vokabeltests)" />
+        <select class="g-target">
+          <option value="written"${target==='written'?' selected':''}>→ Schriftlich</option>
+          <option value="oral"${target==='oral'?' selected':''}>→ Mündlich</option>
+        </select>
+        <label>% Gesamtanteil</label>
+        <input type="number" class="g-pct" step="0.01" min="0" value="${percent}" />
+        <button class="btn ghost add-entry">+ Eintrag</button>
+        <button class="btn danger del-group">Gruppe löschen</button>
+      </div>
+      <div class="entries"></div>
+    `;
+    const entriesEl = g.querySelector('.entries');
+
+    function addEntry(val=''){
+      const e = document.createElement('div');
+      e.className = 'entry';
+      e.innerHTML = `
+        <span class="muted">Wert</span>
+        <input type="number" step="0.01" placeholder="z. B. 1.7" value="${val}"/>
+        <button class="btn ghost del-entry">Entfernen</button>
+      `;
+      const inp = e.querySelector('input');
+      inp.addEventListener('input', calc);
+      e.querySelector('.del-entry').addEventListener('click', ()=>{ entriesEl.removeChild(e); calc(); });
+      entriesEl.appendChild(e);
+    }
+
+    // initial entries
+    if(entries && entries.length){ entries.forEach(v=> addEntry(v)); }
+    else { addEntry(''); }
+
+    // events
+    g.querySelector('.add-entry').addEventListener('click', ()=>{ addEntry(''); });
+    g.querySelector('.del-group').addEventListener('click', ()=>{ groupList.removeChild(g); renumber(groupList); calc(); });
+    g.querySelector('.g-name').addEventListener('input', calc);
+    g.querySelector('.g-target').addEventListener('input', calc);
+    g.querySelector('.g-pct').addEventListener('input', calc);
+
+    groupList.appendChild(g);
+    renumber(groupList);
+    calc();
+  }
+
+  function gatherGroups(){
+    const groups = Array.from(groupList.children).map(g=>{
+      const name = g.querySelector('.g-name').value || 'Gruppe';
+      const target = g.querySelector('.g-target').value;
+      const p = parseFloat((g.querySelector('.g-pct').value||'0').toString().replace(',','.'));
+      const vals = Array.from(g.querySelectorAll('.entries input[type=number]')).map(inp=>{
+        const v = parseFloat((inp.value||'').toString().replace(',','.'));
+        return Number.isFinite(v) ? v : null;
+      }).filter(v=>v!==null);
+      return {name, target, p: Number.isFinite(p)?Math.max(0,p):0, vals};
+    });
+    // build by category
+    const byCat = { written: [], oral: [] };
+    groups.forEach(gr=>{
+      if(gr.vals.length){
+        const mean = average(gr.vals);
+        byCat[gr.target].push({ name: gr.name, p: gr.p, mean });
+      }
+    });
+    return { groups, byCat };
+  }
+
+  function applyGroupsToAvg(avg, catGroups){
+    if(catGroups.length===0){
+      return avg;
+    }
+    const pSum = catGroups.reduce((s,g)=> s + g.p, 0); // percent 0..∞
+    const scale = pSum > 100 ? (100 / pSum) : 1;
+    const fracs = catGroups.map(g => (g.p * scale) / 100); // 0..1
+    const fSum = fracs.reduce((a,b)=>a+b,0); // <=1
+    const weightedGroups = catGroups.reduce((s,g,idx)=> s + fracs[idx]*g.mean, 0);
+
+    if(Number.isFinite(avg)){
+      return (1 - fSum)*avg + weightedGroups;
+    }else{
+      // Kein Basis-Ø vorhanden: Gruppen untereinander normieren
+      if(fSum>0){
+        // effektiver gewichteter Mittelwert der Gruppen
+        return catGroups.reduce((s,g,idx)=> s + (fracs[idx]/fSum)*g.mean, 0);
+      }else{
+        return null;
+      }
+    }
+  }
+
+  function roundValue(x){
+    if(x==null) return null;
+    switch(roundMode.value){
+      case 'oneDecimal': return Math.round(x*10)/10;
+      case 'halfUp': return Math.round(x);
+      case 'ceiling': return Math.ceil(x);
+      case 'floor': return Math.floor(x);
+      default: return x;
+    }
+  }
+
+  function calc(){
+    const wVals = readScores(writtenList);
+    const oVals = readScores(oralList);
+    let avgW = average(wVals);
+    let avgO = average(oVals);
+
+    const {groups, byCat} = gatherGroups();
+
+    // apply groups
+    avgW = applyGroupsToAvg(avgW, byCat.written);
+    avgO = applyGroupsToAvg(avgO, byCat.oral);
+
+    // sum labels
+    const sumW = byCat.written.reduce((s,g)=> s + g.p, 0);
+    const sumO = byCat.oral.reduce((s,g)=> s + g.p, 0);
+    sumGroupsW.textContent = (sumW>100? '≥100% (normiert)' : (sumW.toString().replace('.',',')) + '%');
+    sumGroupsO.textContent = (sumO>100? '≥100% (normiert)' : (sumO.toString().replace('.',',')) + '%');
+
+    avgWrittenEl.textContent = Number.isFinite(avgW) ? avgW.toFixed(2) : '–';
+    avgOralEl.textContent = Number.isFinite(avgO) ? avgO.toFixed(2) : '–';
+
+    // combine categories
+    const wW = Math.min(100, Math.max(0, parseFloat(weightWritten.value||'50')));
+    const wO = 100 - wW;
+    wWrittenLabel.textContent = wW + '%';
+    wOralLabel.textContent = wO + '%';
+
+    let yearNote = null;
+    if(Number.isFinite(avgW) && Number.isFinite(avgO)){
+      yearNote = (wW/100)*avgW + (wO/100)*avgO;
+    }else if(Number.isFinite(avgW)){
+      yearNote = avgW;
+    }else if(Number.isFinite(avgO)){
+      yearNote = avgO;
+    }
+
+    // half year
+    let final = yearNote;
+    let parts = [];
+    if(useHalfYear.checked){
+      const hy = parseFloat((halfYearGrade.value || '').toString().replace(',','.'));
+      const hyW = Math.min(100, Math.max(0, parseFloat(halfYearWeight.value||'50')));
+      const cyW = 100 - hyW;
+      if(Number.isFinite(hy) && Number.isFinite(yearNote)){
+        final = (hyW/100)*hy + (cyW/100)*yearNote;
+        parts.push(`Halbjahr ${hyW}% & aktuelles Jahr ${cyW}%`);
+      }else if(Number.isFinite(hy)){
+        final = hy; parts.push(`Nur Halbjahr berücksichtigt`);
+      }else if(Number.isFinite(yearNote)){
+        final = yearNote; parts.push(`Nur aktuelles Jahr berücksichtigt`);
+      }else{
+        final = null;
+      }
+    }
+
+    const rounded = roundValue(final);
+    finalGrade.textContent = Number.isFinite(rounded) ? (roundMode.value==='oneDecimal' ? rounded.toFixed(1) : String(rounded)) : '–';
+
+    // explanation
+    const details = [];
+    if(Number.isFinite(avgW)) details.push(`Ø schriftlich: ${avgW.toFixed(2)}`);
+    if(Number.isFinite(avgO)) details.push(`Ø mündlich: ${avgO.toFixed(2)}`);
+    details.push(`Gewichtung S/M: ${wW}% / ${wO}%`);
+    if(useHalfYear.checked) details.push(parts.join(' · '));
+    details.push(`Rundung: ${({'none':'keine','oneDecimal':'1 Nachkomma','halfUp':'kaufmännisch','ceiling':'auf','floor':'ab'})[roundMode.value]}`);
+    explain.textContent = details.filter(Boolean).join(' | ');
+  }
+
+  // Events
+  addWrittenBtn.addEventListener('click', ()=> addScoreItem(writtenList, 'Schriftliche Arbeit'));
+  addOralBtn.addEventListener('click', ()=> addScoreItem(oralList, 'Mündliche Note'));
+  clearWrittenBtn.addEventListener('click', ()=> { writtenList.innerHTML=''; calc(); });
+  clearOralBtn.addEventListener('click', ()=> { oralList.innerHTML=''; calc(); });
+
+  addGroupBtn.addEventListener('click', ()=> addGroup('Gruppe', 'oral', '0', ['']));
+  clearGroupsBtn.addEventListener('click', ()=> { groupList.innerHTML=''; calc(); });
+
+  [weightWritten, useHalfYear, halfYearGrade, halfYearWeight, roundMode].forEach(el=> el.addEventListener('input', calc));
+  resetWeights.addEventListener('click', ()=>{weightWritten.value=50; calc();});
+
+  // Persist
+  function getState(){
+    const groups = Array.from(groupList.children).map(g=>{
+      return {
+        name: g.querySelector('.g-name').value,
+        target: g.querySelector('.g-target').value,
+        pct: g.querySelector('.g-pct').value,
+        entries: Array.from(g.querySelectorAll('.entries input[type=number]')).map(inp=> inp.value)
+      };
+    });
+    return {
+      written: readScores(writtenList),
+      oral: readScores(oralList),
+      groups,
+      weightWritten: weightWritten.value,
+      useHalfYear: useHalfYear.checked,
+      halfYearGrade: halfYearGrade.value,
+      halfYearWeight: halfYearWeight.value,
+      roundMode: roundMode.value
+    };
+  }
+  function setState(s){
+    writtenList.innerHTML=''; oralList.innerHTML=''; groupList.innerHTML='';
+    (s.written || []).forEach(()=> addScoreItem(writtenList, 'Schriftliche Arbeit'));
+    (s.oral || []).forEach(()=> addScoreItem(oralList, 'Mündliche Note'));
+    (s.groups || []).forEach(g=> addGroup(g.name || 'Gruppe', g.target || 'oral', g.pct || '0', g.entries && g.entries.length ? g.entries : ['']));
+    // fill values for written/oral
+    Array.from(writtenList.querySelectorAll('input[type=number]')).forEach((inp,i)=> inp.value = (s.written||[])[i] ?? '');
+    Array.from(oralList.querySelectorAll('input[type=number]')).forEach((inp,i)=> inp.value = (s.oral||[])[i] ?? '');
+
+    weightWritten.value = s.weightWritten ?? '50';
+    useHalfYear.checked = !!s.useHalfYear;
+    halfYearGrade.value = s.halfYearGrade ?? '';
+    halfYearWeight.value = s.halfYearWeight ?? '50';
+    roundMode.value = s.roundMode ?? 'none';
+    calc();
+  }
+  saveState.addEventListener('click', ()=>{
+    localStorage.setItem('zeugnisrechner-v1', JSON.stringify(getState()));
+    saveState.textContent = 'Gespeichert ✓';
+    setTimeout(()=> saveState.textContent='Speichern', 1200);
+  });
+  loadState.addEventListener('click', ()=>{
+    const raw = localStorage.getItem('zeugnisrechner-v1');
+    if(!raw){ alert('Kein gespeicherter Zustand gefunden.'); return; }
+    try{ setState(JSON.parse(raw)); }catch(e){ alert('Konnte nicht laden.'); }
+  });
+  clearState.addEventListener('click', ()=>{
+    if(confirm('Alles zurücksetzen?')){
+      localStorage.removeItem('zeugnisrechner-v1');
+      writtenList.innerHTML=''; oralList.innerHTML=''; groupList.innerHTML='';
+      weightWritten.value='50'; useHalfYear.checked=true;
+      halfYearGrade.value=''; halfYearWeight.value='50';
+      roundMode.value='none';
+      calc();
+    }
+  });
+
+  // Defaults
+  for(let i=0;i<2;i++){ addScoreItem(writtenList, 'Schriftliche Arbeit'); }
+  for(let i=0;i<3;i++){ addScoreItem(oralList, 'Mündliche Note'); }
+  addGroup('Vokabeltests','oral','10',['']); // Beispiel
+  calc();
+})();
+</script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').catch(function(e){ console.log('SW reg failed', e); });
+  });
+}
+</script>
+
+</body>
+</html>
